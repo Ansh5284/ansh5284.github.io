@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Cost Management Techniques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: The application now features a multi-chapter architecture. It starts with a 'Chapter Selection' view. Upon selecting a chapter, the main content area dynamically displays only that chapter's sections and its dedicated MCQ quiz. The left-hand sidebar navigation adapts to show the specific sections of the active chapter, along with a 'Back to Chapters' link. This structure facilitates modular content management and allows users to focus on one chapter at a time, enhancing navigability and reducing cognitive load. -->
+    <!-- Visualization & Content Choices:
+        - Chapter Selection: Goal: Organize/Navigate -> Viz: Grid of clickable chapter cards -> Interaction: Click to load specific chapter content -> Justification: Provides a clear, visual entry point for multi-chapter content. -> Library: HTML/CSS/JS.
+        - Report Info: Seven Wastes -> Goal: Inform/Organize -> Viz: Interactive card grid -> Interaction: Click to reveal description -> Justification: Breaks down a list into a more engaging, explorable format. -> Library: HTML/CSS/JS.
+        - Report Info: 5S Methodology -> Goal: Inform/Organize -> Viz: Interactive stepper diagram -> Interaction: Click on each 'S' to view details -> Justification: Visualizes the process flow better than text and encourages step-by-step learning. -> Library: HTML/CSS/JS.
+        - Report Info: OEE Calculation Example -> Goal: Inform/Interact -> Viz: Interactive Calculator with Gauge Charts -> Interaction: User inputs data to see real-time calculation of Availability, Performance, Quality, and overall OEE -> Justification: Turns a static calculation into a hands-on learning tool, deeply reinforcing the formula's components. -> Library: Chart.js.
+        - Report Info: Six Sigma Levels vs. Yield -> Goal: Compare -> Viz: Interactive Bar Chart -> Interaction: Hover to see detailed DPMO and Yield % -> Justification: Provides a clear visual comparison of the exponential improvement between sigma levels. -> Library: Chart.js.
+        - Report Info: DMAIC vs DMADV -> Goal: Compare -> Viz: Side-by-side comparison table -> Interaction: Static -> Justification: A clean table is the most effective way to compare features directly. -> Library: HTML/Tailwind.
+        - Report Info: MCQ Test -> Goal: Assess/Reinforce -> Viz: Interactive Quiz -> Interaction: Select answers, navigate questions, submit for scoring and detailed rationale feedback. -> Justification: Provides an active learning component for self-assessment and deeper understanding of correct/incorrect reasoning. -> Library: HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .gauge-chart-container { position: relative; width: 100%; max-width: 200px; height: 150px; margin: auto; }
+        .nav-link { transition: all 0.2s ease-in-out; }
+        .nav-link.active { background-color: #0d9488; color: white; }
+        .nav-link:not(.active):hover { background-color: #f0fdfa; color: #0f766e; }
+        .content-section { scroll-margin-top: 2rem; }
+        .quiz-option-label {
+            display: block;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .quiz-option-label:hover {
+            background-color: #f0fdfa;
+            border-color: #0d9488;
+        }
+        .quiz-option-input:checked + .quiz-option-label {
+            background-color: #0d9488;
+            color: white;
+            border-color: #0d9488;
+        }
+        .quiz-option-input:disabled + .quiz-option-label {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .quiz-option-label.correct {
+            background-color: #d1fae5; /* Green-100 */
+            border-color: #10b981; /* Green-500 */
+            color: #065f46; /* Green-800 */
+        }
+        .quiz-option-label.incorrect {
+            background-color: #fee2e2; /* Red-100 */
+            border-color: #ef4444; /* Red-500 */
+            color: #991b1b; /* Red-800 */
+        }
+        .quiz-option-label.selected-correct {
+            background-color: #0d9488;
+            color: white;
+            border-color: #0d9488;
+        }
+        .quiz-option-label.selected-incorrect {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        .chapter-card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .chapter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div class="flex">
+        <nav class="fixed top-0 left-0 h-screen w-64 bg-white shadow-lg p-4 overflow-y-auto hidden lg:block">
+            <h1 class="text-xl font-bold text-teal-700 mb-6">Cost Management</h1>
+            <ul id="desktop-nav" class="space-y-2">
+                <li><a href="#" id="back-to-chapters-link" class="nav-link flex items-center p-2 rounded-lg font-medium hidden">← Back to Chapters</a></li>
+            </ul>
+        </nav>
+
+        <main class="lg:ml-64 p-4 md:p-8 w-full">
+            <header class="mb-8">
+                <h1 class="text-4xl font-bold text-slate-900">Interactive Guide to Cost Management Techniques</h1>
+                <p class="text-slate-600 mt-2">An explorable summary of core concepts in modern operational excellence.</p>
+            </header>
+
+            <div id="chapter-selection-view" class="p-6 bg-white rounded-xl shadow-sm mb-8">
+                <h2 class="text-2xl font-bold text-teal-700 mb-4">Select a Chapter</h2>
+                <p class="text-slate-600 mb-6">Choose a chapter to explore its concepts and test your knowledge with an MCQ quiz.</p>
+                <div id="chapter-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Chapter cards will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <div id="chapter-content-view" class="hidden">
+                <!-- Chapter-specific content will be dynamically loaded here by JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Declare these variables at a higher scope so they are accessible throughout the script
+        let chapterSelectionView;
+        let chapterContentView;
+        let chapterCardsContainer;
+        let desktopNav;
+        let backToChaptersLink;
+
+        let currentOeeChart = null; // Chart.js instance for OEE (Chapter 3)
+        let currentSixSigmaChart = null; // Chart.js instance for Six Sigma (Chapter 3)
+
+        const chaptersData = {
+            'chapter3': {
+                title: 'Chapter 3: Lean System and Innovation',
+                path: 'chapters/chapter3.html',
+                quizPath: 'chapters/chapter3_quiz.json', // Path to quiz data
+                sections: [
+                    { id: 'introduction', title: 'Introduction' },
+                    { id: 'seven-wastes', title: 'The Seven Wastes' },
+                    { id: 'jit', title: 'Just-in-Time (JIT)' },
+                    { id: 'kaizen', title: 'Kaizen Costing' },
+                    { id: '5s', title: '5S Methodology' },
+                    { id: 'tpm', title: 'TPM & OEE Calculator' },
+                    { id: 'cellular', title: 'Cellular Manufacturing' },
+                    { id: 'six-sigma', title: 'Six Sigma' },
+                    { id: 'pi', title: 'Process Innovation' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: { // Dynamic content data for Chapter 3
+                    wasteData: [
+                        { name: 'Overproduction', desc: 'Producing more, earlier, or faster than required by the next process.' },
+                        { name: 'Inventory', desc: 'Any supply in excess of a one-piece flow through your process.' },
+                        { name: 'Waiting', desc: 'Idle time created when materials, information, people, or equipment are not ready.' },
+                        { name: 'Motion', desc: 'Any movement of people or machinery that does not add value to the product.' },
+                        { name: 'Transportation', desc: 'Moving products and materials from one location to another.' },
+                        { name: 'Defects', desc: 'Work that contains errors, rework, mistakes or lacks something necessary.' },
+                        { name: 'Over-processing', desc: 'Putting more into a product or service than is valued by the customer.' },
+                    ],
+                    fiveSData: [
+                        { name: 'Sort (Seiri)', desc: 'Eliminate unnecessary items. Separate what is needed from what is not.' },
+                        { name: 'Set in Order (Seiton)', desc: 'Arrange necessary items for ease of use. A place for everything, and everything in its place.' },
+                        { name: 'Shine (Seiso)', desc: 'Clean the workplace thoroughly. Cleaning is a form of inspection.' },
+                        { name: 'Standardize (Seiketsu)', desc: 'Create standards for a clean and organized workplace. Make the first 3 S\'s a habit.' },
+                        { name: 'Sustain (Shitsuke)', desc: 'Maintain the established standards through discipline, training, and commitment.' },
+                    ],
+                    sixSigmaChartData: {
+                        labels: ['1σ', '2σ', '3σ', '4σ', '5σ', '6σ'],
+                        datasets: [{
+                            label: 'Defects Per Million Opportunities (Log Scale)',
+                            data: [691462, 308538, 66807, 6210, 233, 3.4],
+                            backgroundColor: 'rgba(13, 148, 136, 0.6)',
+                            borderColor: 'rgba(15, 118, 110, 1)',
+                            borderWidth: 1,
+                            yields: ['31%', '69%', '93.3%', '99.38%', '99.977%', '99.99966%']
+                        }]
+                    },
+                    oeeInputsInitial: {
+                        plannedTime: 500,
+                        downtime: 25,
+                        idealCycleTime: 15,
+                        totalCount: 1800,
+                        goodCount: 1750
+                    }
+                }
+            },
+            'chapter4': {
+                title: 'Chapter 4: Specialist Cost Management Techniques',
+                path: 'chapters/chapter4.html',
+                quizPath: 'chapters/chapter4_quiz.json', // Path to quiz data
+                sections: [
+                    { id: 'cost-control-reduction', title: 'Cost Control & Reduction' },
+                    { id: 'target-costing', title: 'Target Costing' },
+                    { id: 'life-cycle-costing', title: 'Life Cycle Costing' },
+                    { id: 'theory-of-constraints', title: 'Theory of Constraints' },
+                    { id: 'throughput-accounting', title: 'Throughput Accounting' },
+                    { id: 'ema', title: 'Environmental Management Accounting' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 4 beyond its HTML
+            },
+            'chapter5': { // NEW CHAPTER 5 ENTRY
+                title: 'Chapter 5: Management of Cost Strategically for Emerging Business Models',
+                path: 'chapters/chapter5.html',
+                quizPath: 'chapters/chapter5_quiz.json',
+                sections: [
+                    { id: 'introduction-ch5', title: 'Introduction' },
+                    { id: 'changing-environment', title: 'Changing Business Environment' },
+                    { id: 'digital-technologies', title: 'Digital Technologies' },
+                    { id: 'business-ecosystems', title: 'Business Ecosystems' },
+                    { id: 'hyper-competition', title: 'Hyper Competition' },
+                    { id: 'transformation-disruption', title: 'Transformation & Disruption' },
+                    { id: 'advanced-manufacturing', title: 'Advanced Manufacturing' },
+                    { id: 'lean-start-up', title: 'Lean Start-up' },
+                    { id: 'agile-organisations', title: 'Agile Organisations' },
+                    { id: 'startups-incumbents', title: 'Start-ups vs Incumbents' },
+                    { id: 'intrapreneurship', title: 'Intrapreneurship' },
+                    { id: 'innovation-hubs', title: 'Innovation Hubs & Incubators' },
+                    { id: 'supply-chain-partnerships', title: 'Supply Chain Partnerships' },
+                    { id: 'emerging-business-models', title: 'Emerging Business Models Overview' },
+                    { id: 'hyper-disruptive-models', title: 'Hyper Disruptive Business Models' },
+                    { id: 'sustainability-models', title: 'Models Relevant to Sustainability' },
+                    { id: 'emerging-national-markets', title: 'Models Relevant to Emerging National Markets' },
+                    { id: 'strategic-responses', title: 'Strategic Responses' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 5 beyond its HTML
+            },
+            'chapter6': { // NEW CHAPTER 6 ENTRY
+                title: 'Chapter 6: Strategic Revenue Management',
+                path: 'chapters/chapter6.html',
+                quizPath: 'chapters/chapter6_quiz.json',
+                sections: [
+                    { id: 'introduction-ch6', title: 'Introduction' },
+                    { id: 'cvp-analysis', title: 'CVP Analysis' },
+                    { id: 'relevant-cost-concepts', title: 'Relevant Cost Concepts' },
+                    { id: 'pricing-policy', title: 'Pricing Policy' },
+                    { id: 'pricing-decisions', title: 'Pricing Decisions' },
+                    { id: 'product-pricing-theory', title: 'Product Pricing Theory & Principles' },
+                    { id: 'pricing-new-products', title: 'Pricing of New Products' },
+                    { id: 'pricing-methods-existing', title: 'Pricing Methods for Existing Products' },
+                    { id: 'pricing-services', title: 'Pricing of Services' },
+                    { id: 'pricing-emerging-models', title: 'Pricing in Emerging Business Models' },
+                    { id: 'sensitivity-analysis', title: 'Sensitivity Analysis' },
+                    { id: 'pricing-special-circumstances', title: 'Pricing in Special Circumstances' },
+                    { id: 'ethical-non-financial', title: 'Ethical & Non-Financial Considerations' },
+                    { id: 'pricing-strategies', title: 'Pricing Strategies' },
+                    { id: 'kano-model', title: 'Kano\'s Performance Attributes' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 6 beyond its HTML
+            }
+        };
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Quiz Logic Variables
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let quizSubmitted = false;
+
+        // These elements need to be dynamically re-queried after chapter content is loaded
+        let questionDisplay, prevBtn, nextBtn, submitQuizBtn, questionCounter, quizResults, scoreDisplay, correctCountDisplay, incorrectCountDisplay;
+
+        function updateQuizDOMReferences() {
+            questionDisplay = document.getElementById('question-display');
+            prevBtn = document.getElementById('prev-btn');
+            nextBtn = document.getElementById('next-btn');
+            submitQuizBtn = document.getElementById('submit-quiz-btn');
+            questionCounter = document.getElementById('question-counter');
+            quizResults = document.getElementById('quiz-results');
+            scoreDisplay = document.getElementById('score-display');
+            correctCountDisplay = document.getElementById('correct-count');
+            incorrectCountDisplay = document.getElementById('incorrect-count');
+        }
+
+
+        function renderQuizQuestion() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!questionDisplay || !currentQuizData || currentQuizData.questions.length === 0) {
+                if (questionDisplay) questionDisplay.innerHTML = '<p class="text-slate-600">Quiz data not available for this chapter.</p>';
+                return;
+            }
+
+            const question = currentQuizData.questions[currentQuestionIndex];
+
+            const questionHtml = document.createElement('div');
+            questionHtml.className = 'mb-4';
+            questionHtml.innerHTML = `<p class="text-lg font-semibold text-slate-900 mb-4">${currentQuestionIndex + 1}. ${question.question}</p>`;
+            
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'space-y-2';
+
+            const shuffledOptions = shuffleArray([...question.answerOptions]);
+
+            shuffledOptions.forEach((option, optionIndex) => {
+                const optionId = `q${currentQuestionIndex}-option${optionIndex}`;
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = optionId;
+                input.name = `question-${currentQuestionIndex}`;
+                input.value = option.text;
+                input.className = 'hidden quiz-option-input';
+                input.disabled = quizSubmitted;
+
+                const label = document.createElement('label');
+                label.htmlFor = optionId;
+                label.className = 'quiz-option-label bg-white text-slate-800';
+                label.textContent = option.text;
+
+                if (quizSubmitted) {
+                    if (option.isCorrect) {
+                        label.classList.add('correct');
+                    }
+                    if (userAnswers[currentQuestionIndex] === option.text) {
+                        if (option.isCorrect) {
+                            label.classList.add('selected-correct');
+                        } else {
+                            label.classList.add('selected-incorrect');
+                        }
+                    }
+                }
+
+                input.addEventListener('change', (event) => {
+                    if (!quizSubmitted) {
+                        userAnswers[currentQuestionIndex] = event.target.value;
+                    }
+                });
+
+                if (userAnswers[currentQuestionIndex] === option.text) {
+                    input.checked = true;
+                }
+
+                optionsContainer.appendChild(input);
+                optionsContainer.appendChild(label);
+
+                if (quizSubmitted) {
+                    const rationaleDiv = document.createElement('div');
+                    rationaleDiv.className = 'text-sm text-slate-600 mt-1 px-4 py-2 bg-slate-100 rounded-md';
+                    rationaleDiv.textContent = `Rationale: ${option.rationale}`;
+                    optionsContainer.appendChild(rationaleDiv);
+                }
+            });
+
+            questionHtml.appendChild(optionsContainer);
+            questionDisplay.appendChild(questionHtml);
+
+            const hintBtn = document.createElement('button');
+            hintBtn.className = 'mt-4 text-sm text-teal-600 hover:underline';
+            hintBtn.textContent = 'Show Hint';
+            hintBtn.onclick = () => {
+                alert(question.hint);
+            };
+            questionDisplay.appendChild(hintBtn);
+
+            updateQuizNavigationButtons();
+        }
+
+        function updateQuizNavigationButtons() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!prevBtn || !nextBtn || !submitQuizBtn || !questionCounter || !currentQuizData || currentQuizData.questions.length === 0) {
+                if (questionCounter) questionCounter.textContent = 'No questions';
+                return;
+            }
+
+            prevBtn.disabled = currentQuestionIndex === 0 || quizSubmitted;
+            nextBtn.disabled = currentQuestionIndex === currentQuizData.questions.length - 1 || quizSubmitted;
+
+            if (currentQuestionIndex === currentQuizData.questions.length - 1 && !quizSubmitted) {
+                submitQuizBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+            } else {
+                submitQuizBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+            }
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${currentQuizData.questions.length}`;
+        }
+
+        function showQuizResults() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!quizResults || !scoreDisplay || !correctCountDisplay || !incorrectCountDisplay) return;
+
+            quizSubmitted = true;
+            let correctAnswers = 0;
+            for (let i = 0; i < currentQuizData.questions.length; i++) {
+                const question = currentQuizData.questions[i];
+                const userAnswer = userAnswers[i];
+                const correctAnswer = question.answerOptions.find(opt => opt.isCorrect)?.text;
+
+                if (userAnswer === correctAnswer) {
+                    correctAnswers++;
+                }
+            }
+
+            scoreDisplay.textContent = `${correctAnswers} / ${currentQuizData.questions.length}`;
+            correctCountDisplay.textContent = `Correct: ${correctAnswers}`;
+            incorrectCountDisplay.textContent = `Incorrect: ${currentQuizData.questions.length - correctAnswers}`;
+            quizResults.classList.remove('hidden');
+
+            renderQuizQuestion();
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            submitQuizBtn.disabled = true;
+        }
+
+        // Re-attaching event listeners for quiz navigation buttons
+        function attachQuizButtonListeners() {
+            updateQuizDOMReferences(); // Get fresh references
+            if (prevBtn) prevBtn.onclick = () => {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    renderQuizQuestion();
+                }
+            };
+            if (nextBtn) nextBtn.onclick = () => {
+                if (currentQuestionIndex < currentQuizData.questions.length - 1) {
+                    currentQuestionIndex++;
+                    renderQuizQuestion();
+                }
+            };
+            if (submitQuizBtn) submitQuizBtn.onclick = showQuizResults;
+        }
+
+
+        // OEE Calculator Logic
+        const oeeInputs = ['plannedTime', 'downtime', 'idealCycleTime', 'totalCount', 'goodCount'];
+        const oeeElements = {
+            availability: null, // Will be set dynamically
+            performance: null,
+            quality: null,
+            oee: null
+        };
+
+        function updateOeeDOMReferences() {
+            oeeElements.availability = document.getElementById('availability-result');
+            oeeElements.performance = document.getElementById('performance-result');
+            oeeElements.quality = document.getElementById('quality-result');
+            oeeElements.oee = document.getElementById('oee-result');
+        }
+
+        function calculateOEE() {
+            updateOeeDOMReferences(); // Ensure references are fresh
+            const values = {};
+            oeeInputs.forEach(id => {
+                const inputElement = document.getElementById(id);
+                if (inputElement) { // Check if element exists (only for Chapter 3)
+                    values[id] = parseFloat(inputElement.value);
+                }
+            });
+
+            // Only proceed if all relevant inputs for OEE are found and are numbers
+            if (oeeElements.oee && Object.values(values).every(val => !isNaN(val))) {
+                const operatingTime = values.plannedTime - values.downtime;
+                const availability = (values.plannedTime > 0) ? (operatingTime / values.plannedTime) : 0;
+
+                const standardTime = (values.totalCount * values.idealCycleTime) / 60;
+                const performance = (operatingTime > 0) ? (standardTime / operatingTime) : 0;
+
+                const quality = (values.totalCount > 0) ? (values.goodCount / values.totalCount) : 0;
+
+                const oee = availability * performance * quality;
+
+                oeeElements.availability.textContent = (availability * 100).toFixed(1) + '%';
+                oeeElements.performance.textContent = (performance * 100).toFixed(1) + '%';
+                oeeElements.quality.textContent = (quality * 100).toFixed(1) + '%';
+                oeeElements.oee.textContent = (oee * 100).toFixed(1) + '%';
+            }
+        }
+
+        function attachOeeInputListeners() {
+            oeeInputs.forEach(id => {
+                const inputElement = document.getElementById(id);
+                if (inputElement) {
+                    inputElement.removeEventListener('input', calculateOEE); // Prevent duplicate listeners
+                    inputElement.addEventListener('input', calculateOEE);
+                }
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Assign them here inside DOMContentLoaded
+            chapterSelectionView = document.getElementById('chapter-selection-view');
+            chapterContentView = document.getElementById('chapter-content-view');
+            chapterCardsContainer = document.getElementById('chapter-cards-container');
+            desktopNav = document.getElementById('desktop-nav');
+            backToChaptersLink = document.getElementById('back-to-chapters-link');
+
+
+            function displayChapterSelection() {
+                chapterContentView.innerHTML = ''; // Clear previous chapter content
+                chapterContentView.classList.add('hidden');
+                chapterSelectionView.classList.remove('hidden');
+                backToChaptersLink.classList.add('hidden');
+                renderChapterCards();
+                updateNavForChapterSelection();
+            }
+
+            async function displayChapter(chapterId) {
+                const chapter = chaptersData[chapterId];
+                if (!chapter) {
+                    console.error('Chapter not found:', chapterId);
+                    return;
+                }
+
+                currentChapterId = chapterId;
+                // currentQuizData will be fetched dynamically below
+
+                chapterSelectionView.classList.add('hidden');
+                chapterContentView.classList.remove('hidden');
+                backToChaptersLink.classList.remove('hidden');
+
+                try {
+                    // Fetch chapter content
+                    const chapterResponse = await fetch(chapter.path);
+                    if (!chapterResponse.ok) {
+                        throw new Error(`Failed to load chapter content: ${chapterResponse.statusText}`);
+                    }
+                    const chapterHtmlContent = await chapterResponse.text();
+                    chapterContentView.innerHTML = chapterHtmlContent;
+
+                    // Fetch quiz data
+                    const quizResponse = await fetch(chapter.quizPath);
+                    if (!quizResponse.ok) {
+                        throw new Error(`Failed to load quiz data: ${quizResponse.statusText}`);
+                    }
+                    currentQuizData = await quizResponse.json(); // Assign fetched quiz data
+
+
+                    // Re-initialize dynamic elements for Chapter 3
+                    if (chapterId === 'chapter3') {
+                        // Ensure elements exist before trying to render
+                        if (document.getElementById('waste-grid')) renderWasteGrid(chapter.content.wasteData);
+                        if (document.getElementById('5s-stepper')) render5SStepper(chapter.content.fiveSData);
+                        if (document.getElementById('sixSigmaChart')) initializeSixSigmaChart(chapter.content.sixSigmaChartData);
+                        
+                        attachOeeInputListeners(); // Re-attach listeners for OEE inputs
+                        if (document.getElementById('plannedTime')) initializeOEEInputs(chapter.content.oeeInputsInitial);
+                    }
+                    // Add similar conditional re-initialization for other chapters if they have dynamic elements
+
+                } catch (error) {
+                    console.error('Error loading chapter or quiz:', error);
+                    chapterContentView.innerHTML = `<p class="text-red-600">Error loading chapter content or quiz data. Please try again. Details: ${error.message}</p>`;
+                    return; // Stop execution if fetch fails
+                }
+
+
+                // Reset and render quiz (quiz elements are part of the loaded HTML, so ensure they exist)
+                // These elements are part of the *fetched* chapter HTML, so they must be queried AFTER innerHTML is set.
+                const quizContainerElement = document.getElementById('quiz-container');
+                if (quizContainerElement) { // Check if the quiz section was loaded
+                    attachQuizButtonListeners(); // Re-attach listeners for quiz buttons
+                    currentQuestionIndex = 0;
+                    userAnswers = Array(currentQuizData.questions.length).fill(null);
+                    quizSubmitted = false;
+                    
+                    updateQuizDOMReferences(); // Get fresh references for quiz elements
+                    if (quizResults) quizResults.classList.add('hidden');
+                    if (submitQuizBtn) submitQuizBtn.classList.add('hidden');
+                    if (nextBtn) nextBtn.classList.remove('hidden');
+
+                    renderQuizQuestion();
+                }
+
+
+                updateNavForChapter(chapter.sections);
+
+                // Scroll to the top of the content view
+                chapterContentView.scrollTop = 0;
+            }
+
+            function renderChapterCards() {
+                chapterCardsContainer.innerHTML = '';
+                Object.keys(chaptersData).forEach(chapterId => {
+                    const chapter = chaptersData[chapterId];
+                    const card = document.createElement('div');
+                    card.className = 'chapter-card p-6 bg-white rounded-xl shadow-md border border-slate-200';
+                    card.innerHTML = `
+                        <h3 class="text-xl font-bold text-teal-700 mb-2">${chapter.title}</h3>
+                        <p class="text-slate-600">Explore core concepts and test your knowledge.</p>
+                    `;
+                    card.addEventListener('click', () => displayChapter(chapterId));
+                    chapterCardsContainer.appendChild(card);
+                });
+            }
+
+            function updateNavForChapterSelection() {
+                desktopNav.innerHTML = '';
+                desktopNav.appendChild(backToChaptersLink); // Keep it hidden or show based on context
+                backToChaptersLink.classList.add('hidden'); // Ensure it's hidden on chapter selection view
+                Object.keys(chaptersData).forEach(chapterId => {
+                    const chapter = chaptersData[chapterId];
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<a href="#" data-chapter-id="${chapterId}" class="nav-link flex items-center p-2 rounded-lg font-medium">${chapter.title}</a>`;
+                    listItem.querySelector('a').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        displayChapter(chapterId);
+                    });
+                    desktopNav.appendChild(listItem);
+                });
+            }
+
+            function updateNavForChapter(sections) {
+                desktopNav.innerHTML = '';
+                desktopNav.appendChild(backToChaptersLink);
+                backToChaptersLink.classList.remove('hidden');
+
+                sections.forEach(section => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<a href="#${section.id}" class="nav-link flex items-center p-2 rounded-lg font-medium">${section.title}</a>`;
+                    desktopNav.appendChild(listItem);
+                });
+
+                // Re-attach observer for active class
+                // Need to re-query sections after content is loaded
+                const sectionsInView = document.querySelectorAll('#chapter-content-view .content-section');
+                const navLinksInView = document.querySelectorAll('.nav-link');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            navLinksInView.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                    link.classList.add('active');
+                                }
+                            });
+                        }
+                    });
+                }, { root: null, rootMargin: '0px', threshold: 0.4 });
+                sectionsInView.forEach(section => observer.observe(section));
+            }
+
+            // Content Rendering Functions (moved from global scope into specific functions)
+            function renderWasteGrid(data) {
+                const wasteGrid = document.getElementById('waste-grid');
+                if (!wasteGrid) return; // Ensure element exists for Chapter 3
+                wasteGrid.innerHTML = ''; // Clear previous content
+                data.forEach(waste => {
+                    const card = document.createElement('div');
+                    card.className = 'p-4 bg-slate-50 rounded-lg shadow-sm cursor-pointer hover:bg-teal-50 hover:shadow-md transition-all';
+                    card.innerHTML = `<h3 class="font-semibold text-slate-800">${waste.name}</h3>`;
+                    card.addEventListener('click', () => {
+                        const descEl = card.querySelector('p');
+                        if (descEl) {
+                            descEl.remove();
+                        } else {
+                            const newDesc = document.createElement('p');
+                            newDesc.className = 'text-sm text-slate-600 mt-2';
+                            newDesc.textContent = waste.desc;
+                            card.appendChild(newDesc);
+                        }
+                    });
+                    wasteGrid.appendChild(card);
+                });
+            }
+
+            function render5SStepper(data) {
+                const stepper = document.getElementById('5s-stepper');
+                const details = document.getElementById('5s-details');
+                if (!stepper || !details) return; // Ensure elements exist for Chapter 3
+                stepper.innerHTML = ''; // Clear previous content
+                details.innerHTML = ''; // Clear previous content
+
+                data.forEach((s, index) => {
+                    const step = document.createElement('button');
+                    step.className = 'step-btn p-3 rounded-full w-full md:w-auto text-center font-semibold border-2 border-slate-200 bg-white hover:border-teal-500 hover:bg-teal-50 transition';
+                    step.textContent = s.name;
+                    step.dataset.index = index;
+                    stepper.appendChild(step);
+
+                    step.addEventListener('click', () => {
+                        document.querySelectorAll('#5s-stepper .step-btn').forEach(btn => btn.classList.remove('bg-teal-500', 'text-white', 'border-teal-500'));
+                        step.classList.add('bg-teal-500', 'text-white', 'border-teal-500');
+                        details.innerHTML = `<p class="font-semibold">${s.name}</p><p class="text-slate-700">${s.desc}</p>`;
+                    });
+                });
+                if (data.length > 0) {
+                    stepper.querySelector('.step-btn').click(); // Activate first step by default
+                }
+            }
+
+            function initializeSixSigmaChart(data) {
+                const sixSigmaCanvas = document.getElementById('sixSigmaChart');
+                if (!sixSigmaCanvas) {
+                    console.warn("Six Sigma Canvas not found.");
+                    return;
+                }
+
+                // Safely destroy previous chart instance if it exists and is a Chart object
+                if (currentSixSigmaChart instanceof Chart) {
+                    currentSixSigmaChart.destroy();
+                }
+                
+                const sixSigmaCtx = sixSigmaCanvas.getContext('2d');
+                currentSixSigmaChart = new Chart(sixSigmaCtx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: 'Defects vs. Sigma Level', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y.toLocaleString();
+                                        }
+                                        return label;
+                                    },
+                                    afterLabel: function(context) {
+                                        return `Yield: ${context.dataset.yields[context.dataIndex]}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'logarithmic',
+                                title: { display: true, text: 'DPMO (Log Scale)' },
+                                min: 1
+                            },
+                            x: {
+                                title: { display: true, text: 'Sigma Level' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function initializeOEEInputs(initialValues) {
+                const plannedTimeInput = document.getElementById('plannedTime');
+                const downtimeInput = document.getElementById('downtime');
+                const idealCycleTimeInput = document.getElementById('idealCycleTime');
+                const totalCountInput = document.getElementById('totalCount');
+                const goodCountInput = document.getElementById('goodCount');
+
+                if (plannedTimeInput) plannedTimeInput.value = initialValues.plannedTime;
+                if (downtimeInput) downtimeInput.value = initialValues.downtime;
+                if (idealCycleTimeInput) idealCycleTimeInput.value = initialValues.idealCycleTime;
+                if (totalCountInput) totalCountInput.value = initialValues.totalCount;
+                if (goodCountInput) goodCountInput.value = initialValues.goodCount;
+                
+                calculateOEE(); // Recalculate OEE with new initial values
+            }
+
+            // Initial load: Display chapter selection
+            displayChapterSelection();
+
+            backToChaptersLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                displayChapterSelection();
+            });
+        });
+    </script>
+</body>
+</html>

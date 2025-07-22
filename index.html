@@ -388,6 +388,9 @@
                 return;
             }
 
+            // FIX: Clear previous question content before rendering the new one
+            questionDisplay.innerHTML = '';
+
             const question = currentQuizData.questions[currentQuestionIndex];
 
             const questionHtml = document.createElement('div');
@@ -469,8 +472,9 @@
                 return;
             }
 
-            prevBtn.disabled = currentQuestionIndex === 0 || quizSubmitted;
-            nextBtn.disabled = currentQuestionIndex === currentQuizData.questions.length - 1 || quizSubmitted;
+            // Corrected lines: Remove '|| quizSubmitted' from navigation buttons
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === currentQuizData.questions.length - 1;
 
             if (currentQuestionIndex === currentQuizData.questions.length - 1 && !quizSubmitted) {
                 submitQuizBtn.classList.remove('hidden');
@@ -483,7 +487,8 @@
 
             // Show/hide generate new quiz button based on quiz state
             if (generateNewQuizBtn) {
-                if (quizSubmitted || currentQuizData.questions.length > 0) { // Show if quiz completed or loaded
+                // Only show if a chapter is loaded and there's quiz data
+                if (currentChapterId && currentQuizData.questions.length > 0) {
                     generateNewQuizBtn.classList.remove('hidden');
                 } else {
                     generateNewQuizBtn.classList.add('hidden');

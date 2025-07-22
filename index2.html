@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Cost Management Techniques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .gauge-chart-container { position: relative; width: 100%; max-width: 200px; height: 150px; margin: auto; }
+        .nav-link { transition: all 0.2s ease-in-out; }
+        .nav-link.active { background-color: #0d9488; color: white; }
+        .nav-link:not(.active):hover { background-color: #f0fdfa; color: #0f766e; }
+        .content-section { scroll-margin-top: 2rem; }
+        .quiz-option-label {
+            display: block;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .quiz-option-label:hover {
+            background-color: #f0fdfa;
+            border-color: #0d9488;
+        }
+        .quiz-option-input:checked + .quiz-option-label {
+            background-color: #0d9488;
+            color: white;
+            border-color: #0d9488;
+        }
+        .quiz-option-input:disabled + .quiz-option-label {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .quiz-option-label.correct {
+            background-color: #d1fae5; /* Green-100 */
+            border-color: #10b981; /* Green-500 */
+            color: #065f46; /* Green-800 */
+        }
+        .quiz-option-label.incorrect {
+            background-color: #fee2e2; /* Red-100 */
+            border-color: #ef4444; /* Red-500 */
+            color: #991b1b; /* Red-800 */
+        }
+        .quiz-option-label.selected-correct {
+            background-color: #0d9488;
+            color: white;
+            border-color: #0d9488;
+        }
+        .quiz-option-label.selected-incorrect {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        .chapter-card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .chapter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        #quiz-loading-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+            font-style: italic;
+            color: #64748b; /* slate-500 */
+        }
+    </style>
+</head>
+<body>
+    <div class="flex">
+        <nav class="fixed top-0 left-0 h-screen w-64 bg-white shadow-lg p-4 overflow-y-auto hidden lg:block">
+            <h1 class="text-xl font-bold text-teal-700 mb-6">Cost Management</h1>
+            <ul id="desktop-nav" class="space-y-2">
+                <li><a href="#" id="back-to-chapters-link" class="nav-link flex items-center p-2 rounded-lg font-medium hidden">← Back to Chapters</a></li>
+            </ul>
+        </nav>
+
+        <main class="lg:ml-64 p-4 md:p-8 w-full">
+            <header class="mb-8">
+                <h1 class="text-4xl font-bold text-slate-900">Interactive Guide to Cost Management Techniques</h1>
+                <p class="text-slate-600 mt-2">An explorable summary of core concepts in modern operational excellence.</p>
+            </header>
+
+            <div id="chapter-selection-view" class="p-6 bg-white rounded-xl shadow-sm mb-8">
+                <h2 class="text-2xl font-bold text-teal-700 mb-4">Select a Chapter</h2>
+                <p class="text-slate-600 mb-6">Choose a chapter to explore its concepts and test your knowledge with an MCQ quiz.</p>
+                <div id="chapter-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+            </div>
+
+            <div id="chapter-content-view" class="hidden">
+                </div>
+        </main>
+    </div>
+
+    <script>
+        // Declare these variables at a higher scope so they are accessible throughout the script
+        let chapterSelectionView;
+        let chapterContentView;
+        let chapterCardsContainer;
+        let desktopNav;
+        let backToChaptersLink;
+
+        let currentOeeChart = null; // Chart.js instance for OEE (Chapter 3)
+        let currentSixSigmaChart = null; // Chart.js instance for Six Sigma (Chapter 3)
+
+        let currentChapterId = null; // Track currently active chapter ID
+        let currentQuizData = null; // Store quiz data for the current chapter
+
+        const chaptersData = {
+            'chapter3': {
+                title: 'Chapter 3: Lean System and Innovation',
+                path: 'chapters/chapter3.html',
+                quizPath: 'chapters/chapter3_quiz.json', // Path to quiz data
+                sections: [
+                    { id: 'introduction', title: 'Introduction' },
+                    { id: 'seven-wastes', title: 'The Seven Wastes' },
+                    { id: 'jit', title: 'Just-in-Time (JIT)' },
+                    { id: 'kaizen', title: 'Kaizen Costing' },
+                    { id: '5s', title: '5S Methodology' },
+                    { id: 'tpm', title: 'TPM & OEE Calculator' },
+                    { id: 'cellular', title: 'Cellular Manufacturing' },
+                    { id: 'six-sigma', title: 'Six Sigma' },
+                    { id: 'pi', title: 'Process Innovation' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: { // Dynamic content data for Chapter 3
+                    wasteData: [
+                        { name: 'Overproduction', desc: 'Producing more, earlier, or faster than required by the next process.' },
+                        { name: 'Inventory', desc: 'Any supply in excess of a one-piece flow through your process.' },
+                        { name: 'Waiting', desc: 'Idle time created when materials, information, people, or equipment are not ready.' },
+                        { name: 'Motion', desc: 'Any movement of people or machinery that does not add value to the product.' },
+                        { name: 'Transportation', desc: 'Moving products and materials from one location to another.' },
+                        { name: 'Defects', desc: 'Work that contains errors, rework, mistakes or lacks something necessary.' },
+                        { name: 'Over-processing', desc: 'Putting more into a product or service than is valued by the customer.' },
+                    ],
+                    fiveSData: [
+                        { name: 'Sort (Seiri)', desc: 'Eliminate unnecessary items. Separate what is needed from what is not.' },
+                        { name: 'Set in Order (Seiton)', desc: 'Arrange necessary items for ease of use. A place for everything, and everything in its place.' },
+                        { name: 'Shine (Seiso)', desc: 'Clean the workplace thoroughly. Cleaning is a form of inspection.' },
+                        { name: 'Standardize (Seiketsu)', desc: 'Create standards for a clean and organized workplace. Make the first 3 S\'s a habit.' },
+                        { name: 'Sustain (Shitsuke)', desc: 'Maintain the established standards through discipline, training, and commitment.' },
+                    ],
+                    sixSigmaChartData: {
+                        labels: ['1σ', '2σ', '3σ', '4σ', '5σ', '6σ'],
+                        datasets: [{
+                            label: 'Defects Per Million Opportunities (Log Scale)',
+                            data: [691462, 308538, 66807, 6210, 233, 3.4],
+                            backgroundColor: 'rgba(13, 148, 136, 0.6)',
+                            borderColor: 'rgba(15, 118, 110, 1)',
+                            borderWidth: 1,
+                            yields: ['31%', '69%', '93.3%', '99.38%', '99.977%', '99.99966%']
+                        }]
+                    },
+                    oeeInputsInitial: {
+                        plannedTime: 500,
+                        downtime: 25,
+                        idealCycleTime: 15,
+                        totalCount: 1800,
+                        goodCount: 1750
+                    }
+                }
+            },
+            'chapter4': {
+                title: 'Chapter 4: Specialist Cost Management Techniques',
+                path: 'chapters/chapter4.html',
+                quizPath: 'chapters/chapter4_quiz.json', // Path to quiz data
+                sections: [
+                    { id: 'cost-control-reduction', title: 'Cost Control & Reduction' },
+                    { id: 'target-costing', title: 'Target Costing' },
+                    { id: 'life-cycle-costing', title: 'Life Cycle Costing' },
+                    { id: 'theory-of-constraints', title: 'Theory of Constraints' },
+                    { id: 'throughput-accounting', title: 'Throughput Accounting' },
+                    { id: 'ema', title: 'Environmental Management Accounting' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 4 beyond its HTML
+            },
+            'chapter5': {
+                title: 'Chapter 5: Management of Cost Strategically for Emerging Business Models',
+                path: 'chapters/chapter5.html',
+                quizPath: 'chapters/chapter5_quiz.json',
+                sections: [
+                    { id: 'introduction-ch5', title: 'Introduction' },
+                    { id: 'changing-environment', title: 'Changing Business Environment' },
+                    { id: 'digital-technologies', title: 'Digital Technologies' },
+                    { id: 'business-ecosystems', title: 'Business Ecosystems' },
+                    { id: 'hyper-competition', title: 'Hyper Competition' },
+                    { id: 'transformation-disruption', title: 'Transformation & Disruption' },
+                    { id: 'advanced-manufacturing', title: 'Advanced Manufacturing' },
+                    { id: 'lean-start-up', title: 'Lean Start-up' },
+                    { id: 'agile-organisations', title: 'Agile Organisations' },
+                    { id: 'startups-incumbents', title: 'Start-ups vs Incumbents' },
+                    { id: 'intrapreneurship', title: 'Intrapreneurship' },
+                    { id: 'innovation-hubs', title: 'Innovation Hubs & Incubators' },
+                    { id: 'supply-chain-partnerships', title: 'Supply Chain Partnerships' },
+                    { id: 'emerging-business-models', title: 'Emerging Business Models Overview' },
+                    { id: 'hyper-disruptive-models', title: 'Hyper Disruptive Business Models' },
+                    { id: 'sustainability-models', title: 'Models Relevant to Sustainability' },
+                    { id: 'emerging-national-markets', title: 'Models Relevant to Emerging National Markets' },
+                    { id: 'strategic-responses', title: 'Strategic Responses' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 5 beyond its HTML
+            },
+            'chapter6': {
+                title: 'Chapter 6: Strategic Revenue Management',
+                path: 'chapters/chapter6.html',
+                quizPath: 'chapters/chapter6_quiz.json',
+                sections: [
+                    { id: 'introduction-ch6', title: 'Introduction' },
+                    { id: 'cvp-analysis', title: 'CVP Analysis' },
+                    { id: 'relevant-cost-concepts', title: 'Relevant Cost Concepts' },
+                    { id: 'pricing-policy', title: 'Pricing Policy' },
+                    { id: 'pricing-decisions', title: 'Pricing Decisions' },
+                    { id: 'product-pricing-theory', title: 'Product Pricing Theory & Principles' },
+                    { id: 'pricing-new-products', title: 'Pricing of New Products' },
+                    { id: 'pricing-methods-existing', title: 'Pricing Methods for Existing Products' },
+                    { id: 'pricing-services', title: 'Pricing of Services' },
+                    { id: 'pricing-emerging-models', title: 'Pricing in Emerging Business Models' },
+                    { id: 'sensitivity-analysis', title: 'Sensitivity Analysis' },
+                    { id: 'pricing-special-circumstances', title: 'Pricing in Special Circumstances' },
+                    { id: 'ethical-non-financial', title: 'Ethical & Non-Financial Considerations' },
+                    { id: 'pricing-strategies', title: 'Pricing Strategies' },
+                    { id: 'kano-model', title: 'Kano\'s Performance Attributes' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 6 beyond its HTML
+            },
+            'chapter7': {
+                title: 'Chapter 7: Strategic Profit Management',
+                path: 'chapters/chapter7.html',
+                quizPath: 'chapters/chapter7_quiz.json',
+                sections: [
+                    { id: 'introduction-ch7', title: 'Introduction' },
+                    { id: 'strategic-profitability-analysis', title: 'Strategic Profitability Analysis' },
+                    { id: 'profitability-analysis-abc', title: 'Profitability Analysis through ABC' },
+                    { id: 'abc-abm-abb', title: 'ABC, ABM, ABB' },
+                    { id: 'pareto-analysis', title: 'Pareto Analysis' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // Dynamic content for Chapter 7 will be handled by its own JS within the HTML
+            },
+            'chapter8': {
+                title: 'Chapter 8: Strategic Performance Management',
+                path: 'chapters/chapter8.html',
+                quizPath: 'chapters/chapter8_quiz.json',
+                sections: [
+                    { id: 'introduction-ch8', title: 'Introduction' },
+                    { id: 'performance-management-strategy', title: 'Performance Management & Strategy' },
+                    { id: 'role-in-business-integration', title: 'Role in Business Integration' },
+                    { id: 'influence-of-org-factors', title: 'Influence of Org Factors' },
+                    { id: 'strategic-performance-issues', title: 'Strategic Performance Issues' },
+                    { id: 'behavioral-aspects', title: 'Behavioral Aspects' },
+                    { id: 'predicting-corporate-failure', title: 'Predicting Corporate Failure' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // Dynamic content for Chapter 8 will be handled by its own JS within the HTML
+            },
+            'chapter9': {
+                title: 'Chapter 9: Strategic Performance Measures in Private Sector',
+                path: 'chapters/chapter9.html',
+                quizPath: 'chapters/chapter9_quiz.json',
+                sections: [
+                    { id: 'introduction-ch9', title: 'Introduction' },
+                    { id: 'performance-management-system', title: 'Performance Management System' },
+                    { id: 'csfs-kpis', title: 'CSFs & KPIs' },
+                    { id: 'performance-measures', title: 'Performance Measures' },
+                    { id: 'role-of-quality', title: 'Role of Quality' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 9 beyond its HTML
+            },
+            'chapter10': {
+                title: 'Chapter 10: Strategic Performance Measures in NPOs',
+                path: 'chapters/chapter10.html',
+                quizPath: 'chapters/chapter10_quiz.json',
+                sections: [
+                    { id: 'introduction-ch10', title: 'Introduction' },
+                    { id: 'nfp-characteristics', title: 'NFP Characteristics' },
+                    { id: 'performance-measurement-npo', title: 'Performance Measurement in NPOs' },
+                    { id: 'vfm-framework', title: 'Value for Money (VFM) Framework' },
+                    { id: 'adapted-balanced-scorecard', title: 'Adapted Balanced Scorecard' },
+                    { id: 'other-measures-npo', title: 'Other Performance Measures' },
+                    { id: 'performance-measurement-process', title: 'Performance Measurement Process' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 10 beyond its HTML
+            },
+            'chapter11': {
+                title: 'Chapter 11: Preparation of Performance Reports',
+                path: 'chapters/chapter11.html',
+                quizPath: 'chapters/chapter11_quiz.json',
+                sections: [
+                    { id: 'introduction-ch11', title: 'Introduction' },
+                    { id: 'responsibility-accounting', title: 'Responsibility Accounting' },
+                    { id: 'performance-reports-role', title: 'Performance Reports & Their Role' },
+                    { id: 'aspects-preparation', title: 'Aspects in Preparation' },
+                    { id: 'types-reports', title: 'Types of Performance Reports' },
+                    { id: 'external-reporting-frameworks', title: 'External Reporting Frameworks' },
+                    { id: 'analyse-action', title: 'Analyze & Action' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 11 beyond its HTML
+            },
+            'chapter12': {
+                title: 'Chapter 12: Divisional Transfer Pricing',
+                path: 'chapters/chapter12.html',
+                quizPath: 'chapters/chapter12_quiz.json',
+                sections: [
+                    { id: 'introduction-ch12', title: 'Introduction' },
+                    { id: 'utility-transfer-pricing', title: 'Utility of Transfer Pricing' },
+                    { id: 'transfer-pricing-methods', title: 'Transfer Pricing Methods' },
+                    { id: 'transfer-pricing-conflict', title: 'Transfer Pricing & Goal Congruence' },
+                    { id: 'transfer-pricing-circumstances', title: 'Transfer Pricing Decision: Circumstances' },
+                    { id: 'resolving-conflict', title: 'Proposals for Resolving Conflict' },
+                    { id: 'international-transfer-pricing', title: 'International Transfer Pricing' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 12 beyond its HTML
+            },
+            'chapter13': {
+                title: 'Chapter 13: Standard Costing',
+                path: 'chapters/chapter13.html',
+                quizPath: 'chapters/chapter13_quiz.json',
+                sections: [
+                    { id: 'introduction-ch13', title: 'Introduction' },
+                    { id: 'advanced-variances', title: 'Analysis of Advanced Variances' },
+                    { id: 'reconciliation-profit', title: 'Reconciliation of Profit' },
+                    { id: 'investigation-variances', title: 'Investigation of Variances' },
+                    { id: 'interdependence-variances', title: 'Possible Interdependence between Variances' },
+                    { id: 'interpretation-variances', title: 'Interpretation of Variances' },
+                    { id: 'reporting-variances', title: 'Reporting of Variances' },
+                    { id: 'behavioural-issues', title: 'Behavioural Issues' },
+                    { id: 'standard-costing-env', title: 'Standard Costing in Contemporary Env.' },
+                    { id: 'quiz', title: 'MCQ Test' }
+                ],
+                content: {} // No specific dynamic content data needed for Chapter 13 beyond its HTML
+            }
+        };
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Quiz Logic Variables
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let quizSubmitted = false;
+
+        // These elements need to be dynamically re-queried after chapter content is loaded
+        let questionDisplay, prevBtn, nextBtn, submitQuizBtn, questionCounter, quizResults, scoreDisplay, correctCountDisplay, incorrectCountDisplay, generateNewQuizBtn, quizLoadingIndicator;
+
+        function updateQuizDOMReferences() {
+            questionDisplay = document.getElementById('question-display');
+            prevBtn = document.getElementById('prev-btn');
+            nextBtn = document.getElementById('next-btn');
+            submitQuizBtn = document.getElementById('submit-quiz-btn');
+            questionCounter = document.getElementById('question-counter');
+            quizResults = document.getElementById('quiz-results');
+            scoreDisplay = document.getElementById('score-display');
+            correctCountDisplay = document.getElementById('correct-count');
+            incorrectCountDisplay = document.getElementById('incorrect-count');
+            generateNewQuizBtn = document.getElementById('generate-new-quiz-btn');
+            quizLoadingIndicator = document.getElementById('quiz-loading-indicator');
+        }
+
+
+        function renderQuizQuestion() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!questionDisplay || !currentQuizData || currentQuizData.questions.length === 0) {
+                if (questionDisplay) questionDisplay.innerHTML = '<p class="text-slate-600">Quiz data not available for this chapter.</p>';
+                return;
+            }
+
+            const question = currentQuizData.questions[currentQuestionIndex];
+
+            const questionHtml = document.createElement('div');
+            questionHtml.className = 'mb-4';
+            questionHtml.innerHTML = `<p class="text-lg font-semibold text-slate-900 mb-4">${currentQuestionIndex + 1}. ${question.question}</p>`;
+            
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'space-y-2';
+
+            const shuffledOptions = shuffleArray([...question.answerOptions]);
+
+            shuffledOptions.forEach((option, optionIndex) => {
+                const optionId = `q${currentQuestionIndex}-option${optionIndex}`;
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = optionId;
+                input.name = `question-${currentQuestionIndex}`;
+                input.value = option.text;
+                input.className = 'hidden quiz-option-input';
+                input.disabled = quizSubmitted;
+
+                const label = document.createElement('label');
+                label.htmlFor = optionId;
+                label.className = 'quiz-option-label bg-white text-slate-800';
+                label.textContent = option.text;
+
+                if (quizSubmitted) {
+                    if (option.isCorrect) {
+                        label.classList.add('correct');
+                    }
+                    if (userAnswers[currentQuestionIndex] === option.text) {
+                        if (option.isCorrect) {
+                            label.classList.add('selected-correct');
+                        } else {
+                            label.classList.add('selected-incorrect');
+                        }
+                    }
+                }
+
+                input.addEventListener('change', (event) => {
+                    if (!quizSubmitted) {
+                        userAnswers[currentQuestionIndex] = event.target.value;
+                    }
+                });
+
+                if (userAnswers[currentQuestionIndex] === option.text) {
+                    input.checked = true;
+                }
+
+                optionsContainer.appendChild(input);
+                optionsContainer.appendChild(label);
+
+                if (quizSubmitted) {
+                    const rationaleDiv = document.createElement('div');
+                    rationaleDiv.className = 'text-sm text-slate-600 mt-1 px-4 py-2 bg-slate-100 rounded-md';
+                    rationaleDiv.textContent = `Rationale: ${option.rationale}`;
+                    optionsContainer.appendChild(rationaleDiv);
+                }
+            });
+
+            questionHtml.appendChild(optionsContainer);
+            questionDisplay.appendChild(questionHtml);
+
+            const hintBtn = document.createElement('button');
+            hintBtn.className = 'mt-4 text-sm text-teal-600 hover:underline';
+            hintBtn.textContent = 'Show Hint';
+            hintBtn.onclick = () => {
+                alert(question.hint);
+            };
+            questionDisplay.appendChild(hintBtn);
+
+            updateQuizNavigationButtons();
+        }
+
+        function updateQuizNavigationButtons() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!prevBtn || !nextBtn || !submitQuizBtn || !questionCounter || !currentQuizData || currentQuizData.questions.length === 0) {
+                if (questionCounter) questionCounter.textContent = 'No questions';
+                return;
+            }
+
+            prevBtn.disabled = currentQuestionIndex === 0 || quizSubmitted;
+            nextBtn.disabled = currentQuestionIndex === currentQuizData.questions.length - 1 || quizSubmitted;
+
+            if (currentQuestionIndex === currentQuizData.questions.length - 1 && !quizSubmitted) {
+                submitQuizBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+            } else {
+                submitQuizBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+            }
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${currentQuizData.questions.length}`;
+
+            // Show/hide generate new quiz button based on quiz state
+            if (generateNewQuizBtn) {
+                if (quizSubmitted || currentQuizData.questions.length > 0) { // Show if quiz completed or loaded
+                    generateNewQuizBtn.classList.remove('hidden');
+                } else {
+                    generateNewQuizBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        function showQuizResults() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!quizResults || !scoreDisplay || !correctCountDisplay || !incorrectCountDisplay) return;
+
+            quizSubmitted = true;
+            let correctAnswers = 0;
+            for (let i = 0; i < currentQuizData.questions.length; i++) {
+                const question = currentQuizData.questions[i];
+                const userAnswer = userAnswers[i];
+                const correctAnswer = question.answerOptions.find(opt => opt.isCorrect)?.text;
+
+                if (userAnswer === correctAnswer) {
+                    correctAnswers++;
+                }
+            }
+
+            scoreDisplay.textContent = `${correctAnswers} / ${currentQuizData.questions.length}`;
+            correctCountDisplay.textContent = `Correct: ${correctAnswers}`;
+            incorrectCountDisplay.textContent = `Incorrect: ${currentQuizData.questions.length - correctAnswers}`;
+            quizResults.classList.remove('hidden');
+
+            renderQuizQuestion();
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            submitQuizBtn.disabled = true;
+        }
+
+        // Re-attaching event listeners for quiz navigation buttons
+        function attachQuizButtonListeners() {
+            updateQuizDOMReferences(); // Get fresh references
+            if (prevBtn) prevBtn.onclick = () => {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    renderQuizQuestion();
+                }
+            };
+            if (nextBtn) nextBtn.onclick = () => {
+                if (currentQuestionIndex < currentQuizData.questions.length - 1) {
+                    currentQuestionIndex++;
+                    renderQuizQuestion();
+                }
+            };
+            if (submitQuizBtn) submitQuizBtn.onclick = showQuizResults;
+            if (generateNewQuizBtn) generateNewQuizBtn.onclick = generateNewQuiz; // Attach new button listener
+        }
+
+        async function generateNewQuiz() {
+            updateQuizDOMReferences(); // Ensure references are fresh
+            if (!generateNewQuizBtn || !quizLoadingIndicator || !currentChapterId) return;
+
+            generateNewQuizBtn.disabled = true;
+            quizLoadingIndicator.style.display = 'block';
+            questionDisplay.innerHTML = '<p class="text-slate-600">Generating new questions, please wait...</p>';
+            quizResults.classList.add('hidden'); // Hide previous results
+
+            const chapterTitle = chaptersData[currentChapterId].title;
+            const prompt = `Generate 10 very hard multiple-choice questions (MCQs) from the topic "${chapterTitle}" from an exam point of view, including practical aspects if applicable. Make sure the options are tricky. Provide the output in JSON format, adhering strictly to the following schema:
+            {
+              "questions": [
+                {
+                  "question": "string",
+                  "answerOptions": [
+                    {
+                      "text": "string",
+                      "rationale": "string",
+                      "isCorrect": boolean
+                    }
+                  ],
+                  "hint": "string"
+                }
+              ]
+            }
+            Ensure there are exactly 4 answer options for each question, and only one isCorrect: true. Do not use 'all/none of the above' options. Ensure all LaTeX backslashes are escaped (e.g., \\frac).`;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+            const apiKey = "AIzaSyBMl3ejP2jBsV7GvDl-uhO1a_cTpaD0bBM"; // Your actual API key
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    currentQuizData = JSON.parse(jsonString);
+                    currentQuestionIndex = 0;
+                    userAnswers = Array(currentQuizData.questions.length).fill(null);
+                    quizSubmitted = false;
+                    renderQuizQuestion();
+                } else {
+                    throw new Error("Unexpected API response structure or empty content.");
+                }
+            } catch (error) {
+                console.error('Error generating new quiz:', error);
+                questionDisplay.innerHTML = `<p class="text-red-600">Failed to generate new quiz. Please try again. Error: ${error.message}</p>`;
+                currentQuizData = { questions: [] }; // Reset quiz data
+            } finally {
+                generateNewQuizBtn.disabled = false;
+                quizLoadingIndicator.style.display = 'none';
+            }
+        }
+
+
+        // OEE Calculator Logic
+        const oeeInputs = ['plannedTime', 'downtime', 'idealCycleTime', 'totalCount', 'goodCount'];
+        const oeeElements = {
+            availability: null, // Will be set dynamically
+            performance: null,
+            quality: null,
+            oee: null
+        };
+
+        function updateOeeDOMReferences() {
+            oeeElements.availability = document.getElementById('availability-result');
+            oeeElements.performance = document.getElementById('performance-result');
+            oeeElements.quality = document.getElementById('quality-result');
+            oeeElements.oee = document.getElementById('oee-result');
+        }
+
+        function calculateOEE() {
+            updateOeeDOMReferences(); // Ensure references are fresh
+            const values = {};
+            oeeInputs.forEach(id => {
+                const inputElement = document.getElementById(id);
+                if (inputElement) { // Check if element exists (only for Chapter 3)
+                    values[id] = parseFloat(inputElement.value);
+                }
+            });
+
+            // Only proceed if all relevant inputs for OEE are found and are numbers
+            if (oeeElements.oee && Object.values(values).every(val => !isNaN(val))) {
+                const operatingTime = values.plannedTime - values.downtime;
+                const availability = (values.plannedTime > 0) ? (operatingTime / values.plannedTime) : 0;
+
+                const standardTime = (values.totalCount * values.idealCycleTime) / 60;
+                const performance = (operatingTime > 0) ? (standardTime / operatingTime) : 0;
+
+                const quality = (values.totalCount > 0) ? (values.goodCount / values.totalCount) : 0;
+
+                const oee = availability * performance * quality;
+
+                oeeElements.availability.textContent = (availability * 100).toFixed(1) + '%';
+                oeeElements.performance.textContent = (performance * 100).toFixed(1) + '%';
+                oeeElements.quality.textContent = (quality * 100).toFixed(1) + '%';
+                oeeElements.oee.textContent = (oee * 100).toFixed(1) + '%';
+            }
+        }
+
+        function attachOeeInputListeners() {
+            oeeInputs.forEach(id => {
+                const inputElement = document.getElementById(id);
+                if (inputElement) {
+                    inputElement.removeEventListener('input', calculateOEE); // Prevent duplicate listeners
+                    inputElement.addEventListener('input', calculateOEE);
+                }
+            });
+        }
+
+        // Chapter 7 MCE Calculator Logic
+        function calculateMCE() {
+            const processingTime = parseFloat(document.getElementById('processingTime').value);
+            const inspectionTime = parseFloat(document.getElementById('inspectionTime').value);
+            const waitingTime = parseFloat(document.getElementById('waitingTime').value);
+            const moveTime = parseFloat(document.getElementById('moveTime').value);
+
+            if (isNaN(processingTime) || isNaN(inspectionTime) || isNaN(waitingTime) || isNaN(moveTime)) {
+                document.getElementById('mceResult').textContent = 'Invalid Input';
+                document.getElementById('vaTimeResult').textContent = 'Invalid Input';
+                document.getElementById('nvaTimeResult').textContent = 'Invalid Input';
+                document.getElementById('mctResult').textContent = 'Invalid Input';
+                return;
+            }
+
+            const vaTime = processingTime;
+            const nvaTime = inspectionTime + waitingTime + moveTime;
+            const mct = vaTime + nvaTime;
+            const mce = (vaTime / mct) * 100;
+
+            document.getElementById('mceResult').textContent = `${mce.toFixed(1)}%`;
+            document.getElementById('vaTimeResult').textContent = `${vaTime.toFixed(1)} hrs`;
+            document.getElementById('nvaTimeResult').textContent = `${nvaTime.toFixed(1)} hrs`;
+            document.getElementById('mctResult').textContent = `${mct.toFixed(1)} hrs`;
+        }
+
+        function attachMCEListeners() {
+            const calculateMCEBtn = document.getElementById('calculateMCE');
+            if (calculateMCEBtn) {
+                calculateMCEBtn.removeEventListener('click', calculateMCE); // Prevent duplicates
+                calculateMCEBtn.addEventListener('click', calculateMCE);
+                // Attach listeners to inputs as well for live update
+                document.getElementById('processingTime').addEventListener('input', calculateMCE);
+                document.getElementById('inspectionTime').addEventListener('input', calculateMCE);
+                document.getElementById('waitingTime').addEventListener('input', calculateMCE);
+                document.getElementById('moveTime').addEventListener('input', calculateMCE);
+                calculateMCE(); // Initial calculation
+            }
+        }
+
+        // Chapter 8 Altman Z-Score Calculator Logic
+        function calculateZScore() {
+            const x1 = parseFloat(document.getElementById('wcTotalAssets').value);
+            const x2 = parseFloat(document.getElementById('reTotalAssets').value);
+            const x3 = parseFloat(document.getElementById('ebitTotalAssets').value);
+            const x4 = parseFloat(document.getElementById('mveTotalLiabilities').value);
+            const x5 = parseFloat(document.getElementById('salesTotalAssets').value);
+
+            if (isNaN(x1) || isNaN(x2) || isNaN(x3) || isNaN(x4) || isNaN(x5)) {
+                document.getElementById('zScoreResult').textContent = 'Invalid Input';
+                document.getElementById('zScorePrediction').textContent = '';
+                return;
+            }
+
+            const zScore = (1.2 * x1) + (1.4 * x2) + (3.3 * x3) + (0.6 * x4) + (1.0 * x5);
+            document.getElementById('zScoreResult').textContent = zScore.toFixed(3);
+
+            let prediction = '';
+            if (zScore < 1.81) {
+                prediction = 'Distress';
+            } else if (zScore >= 1.81 && zScore <= 2.99) {
+                prediction = 'Grey';
+            } else {
+                prediction = 'Safe';
+            }
+            document.getElementById('zScorePrediction').textContent = prediction;
+        }
+
+        function attachZScoreListeners() {
+            const calculateZScoreBtn = document.getElementById('calculateZScore');
+            if (calculateZScoreBtn) {
+                calculateZScoreBtn.removeEventListener('click', calculateZScore); // Prevent duplicates
+                calculateZScoreBtn.addEventListener('click', calculateZScore);
+                // Attach listeners to inputs for live update
+                document.getElementById('wcTotalAssets').addEventListener('input', calculateZScore);
+                document.getElementById('reTotalAssets').addEventListener('input', calculateZScore);
+                document.getElementById('ebitTotalAssets').addEventListener('input', calculateZScore);
+                document.getElementById('mveTotalLiabilities').addEventListener('input', calculateZScore);
+                document.getElementById('salesTotalAssets').addEventListener('input', calculateZScore);
+                calculateZScore(); // Initial calculation
+            }
+        }
+
+        // Chapter 12 International TP Calculator Logic
+        function calculateInternationalTP() {
+            const rawEmeraldMined = parseFloat(document.getElementById('rawEmeraldMined').value);
+            const yieldRatio = parseFloat(document.getElementById('yieldRatio').value);
+            const japanVarCost = parseFloat(document.getElementById('japanVarCost').value);
+            const japanFixedCost = parseFloat(document.getElementById('japanFixedCost').value);
+            const ukVarCost = parseFloat(document.getElementById('ukVarCost').value);
+            const ukFixedCost = parseFloat(document.getElementById('ukFixedCost').value);
+            const japanMarketPrice = parseFloat(document.getElementById('japanMarketPrice').value);
+            const ukSellingPrice = parseFloat(document.getElementById('ukSellingPrice').value);
+            const exchangeRate = parseFloat(document.getElementById('exchangeRate').value);
+            const japanTaxRate = parseFloat(document.getElementById('japanTaxRate').value) / 100;
+            const ukTaxRate = parseFloat(document.getElementById('ukTaxRate').value) / 100;
+            const fullCostMarkup = parseFloat(document.getElementById('fullCostMarkup').value) / 100;
+
+            const polishedEmeraldSold = rawEmeraldMined / yieldRatio;
+
+            // TP at 200% of Full Costs (or specified markup)
+            const japanFullCostPerCarat = japanVarCost + japanFixedCost;
+            const tpFullCostYen = japanFullCostPerCarat * (1 + fullCostMarkup);
+            const tpFullCostPound = tpFullCostYen / exchangeRate;
+
+            // Japan Mining Division Profit (Full Cost TP)
+            const japanRevenueFullCost = rawEmeraldMined * tpFullCostYen;
+            const japanTotalCostFullCost = rawEmeraldMined * japanFullCostPerCarat;
+            const japanPBITFullCost = japanRevenueFullCost - japanTotalCostFullCost;
+            const japanTaxFullCost = japanPBITFullCost * japanTaxRate;
+            const japanProfitAfterTaxFullCostYen = japanPBITFullCost - japanTaxFullCost;
+            const japanProfitAfterTaxFullCostPound = japanProfitAfterTaxFullCostYen / exchangeRate;
+
+            // UK Processing Division Profit (Full Cost TP)
+            const ukRevenueFullCost = polishedEmeraldSold * ukSellingPrice;
+            const ukTransferredInCostFullCost = polishedEmeraldSold * (tpFullCostYen * yieldRatio) / exchangeRate;
+            const ukTotalVarCostFullCost = polishedEmeraldSold * ukVarCost;
+            const ukTotalFixedCostFullCost = polishedEmeraldSold * ukFixedCost;
+            const ukPBITFullCost = ukRevenueFullCost - ukTransferredInCostFullCost - ukTotalVarCostFullCost - ukTotalFixedCostFullCost;
+            const ukTaxFullCost = ukPBITFullCost * ukTaxRate;
+            const ukProfitAfterTaxFullCostPound = ukPBITFullCost - ukTaxFullCost;
+
+            document.getElementById('japanProfitFullCost').textContent = `£${japanProfitAfterTaxFullCostPound.toFixed(0)}`;
+            document.getElementById('ukProfitFullCost').textContent = `£${ukProfitAfterTaxFullCostPound.toFixed(0)}`;
+
+            // TP at Market Price
+            const tpMarketPriceYen = japanMarketPrice;
+            const tpMarketPricePound = tpMarketPriceYen / exchangeRate;
+
+            // Japan Mining Division Profit (Market Price TP)
+            const japanRevenueMarketPrice = rawEmeraldMined * tpMarketPriceYen;
+            const japanTotalCostMarketPrice = rawEmeraldMined * japanFullCostPerCarat;
+            const japanPBITMarketPrice = japanRevenueMarketPrice - japanTotalCostMarketPrice;
+            const japanTaxMarketPrice = japanPBITMarketPrice * japanTaxRate;
+            const japanProfitAfterTaxMarketPriceYen = japanPBITMarketPrice - japanTaxMarketPrice;
+            const japanProfitAfterTaxMarketPricePound = japanProfitAfterTaxMarketPriceYen / exchangeRate;
+
+            // UK Processing Division Profit (Market Price TP)
+            const ukRevenueMarketPrice = polishedEmeraldSold * ukSellingPrice;
+            const ukTransferredInCostMarketPrice = polishedEmeraldSold * (tpMarketPriceYen * yieldRatio) / exchangeRate;
+            const ukTotalVarCostMarketPrice = polishedEmeraldSold * ukVarCost;
+            const ukTotalFixedCostMarketPrice = polishedEmeraldSold * ukFixedCost;
+            const ukPBITMarketPrice = ukRevenueMarketPrice - ukTransferredInCostMarketPrice - ukTotalVarCostMarketPrice - ukTotalFixedCostMarketPrice;
+            const ukTaxMarketPrice = ukPBITMarketPrice * ukTaxRate;
+            const ukProfitAfterTaxMarketPricePound = ukPBITMarketPrice - ukTaxMarketPrice;
+
+            document.getElementById('japanProfitMarketPrice').textContent = `£${japanProfitAfterTaxMarketPricePound.toFixed(0)}`;
+            document.getElementById('ukProfitMarketPrice').textContent = `£${ukProfitAfterTaxMarketPricePound.toFixed(0)}`;
+        }
+
+        function attachInternationalTPListeners() {
+            const calculateInternationalTPBtn = document.getElementById('calculateInternationalTP');
+            if (calculateInternationalTPBtn) {
+                calculateInternationalTPBtn.removeEventListener('click', calculateInternationalTP);
+                calculateInternationalTPBtn.addEventListener('click', calculateInternationalTP);
+                // Attach listeners to all input fields for live updates
+                document.querySelectorAll('#international-tp-calculator input').forEach(input => {
+                    input.removeEventListener('input', calculateInternationalTP);
+                    input.addEventListener('input', calculateInternationalTP);
+                });
+                calculateInternationalTP(); // Initial calculation
+            }
+        }
+
+        // Chapter 13 Learning Curve Calculator Logic
+        function calculateLearningCurve() {
+            const a = parseFloat(document.getElementById('firstUnitTime').value);
+            const x = parseFloat(document.getElementById('cumulativeUnits').value);
+            const b = parseFloat(document.getElementById('learningCoefficient').value);
+
+            if (isNaN(a) || isNaN(x) || isNaN(b)) {
+                document.getElementById('learningCurveResult').textContent = 'Invalid Input';
+                return;
+            }
+
+            const y = a * Math.pow(x, b);
+            document.getElementById('learningCurveResult').textContent = `${y.toFixed(3)} hours`;
+        }
+
+        function attachLearningCurveListeners() {
+            const calculateLearningCurveBtn = document.getElementById('calculateLearningCurve');
+            if (calculateLearningCurveBtn) {
+                calculateLearningCurveBtn.removeEventListener('click', calculateLearningCurve);
+                calculateLearningCurveBtn.addEventListener('click', calculateLearningCurve);
+                document.getElementById('firstUnitTime').addEventListener('input', calculateLearningCurve);
+                document.getElementById('cumulativeUnits').addEventListener('input', calculateLearningCurve);
+                document.getElementById('learningCoefficient').addEventListener('input', calculateLearningCurve);
+                calculateLearningCurve(); // Initial calculation
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Assign them here inside DOMContentLoaded
+            chapterSelectionView = document.getElementById('chapter-selection-view');
+            chapterContentView = document.getElementById('chapter-content-view');
+            chapterCardsContainer = document.getElementById('chapter-cards-container');
+            desktopNav = document.getElementById('desktop-nav');
+            backToChaptersLink = document.getElementById('back-to-chapters-link');
+
+
+            function displayChapterSelection() {
+                chapterContentView.innerHTML = ''; // Clear previous chapter content
+                chapterContentView.classList.add('hidden');
+                chapterSelectionView.classList.remove('hidden');
+                backToChaptersLink.classList.add('hidden');
+                renderChapterCards();
+                updateNavForChapterSelection();
+            }
+
+            async function displayChapter(chapterId) {
+                const chapter = chaptersData[chapterId];
+                if (!chapter) {
+                    console.error('Chapter not found:', chapterId);
+                    return;
+                }
+
+                currentChapterId = chapterId; // Set current chapter ID
+                // currentQuizData will be fetched dynamically below
+
+                chapterSelectionView.classList.add('hidden');
+                chapterContentView.classList.remove('hidden');
+                backToChaptersLink.classList.remove('hidden');
+
+                try {
+                    // Fetch chapter content
+                    const chapterResponse = await fetch(chapter.path);
+                    if (!chapterResponse.ok) {
+                        throw new Error(`Failed to load chapter content: ${chapterResponse.statusText}`);
+                    }
+                    const chapterHtmlContent = await chapterResponse.text();
+                    chapterContentView.innerHTML = chapterHtmlContent;
+
+                    // Fetch quiz data
+                    const quizResponse = await fetch(chapter.quizPath);
+                    if (!quizResponse.ok) {
+                        throw new Error(`Failed to load quiz data: ${quizResponse.statusText}`);
+                    }
+                    currentQuizData = await quizResponse.json(); // Assign fetched quiz data
+
+
+                    // Re-initialize dynamic elements based on chapterId
+                    if (chapterId === 'chapter3') {
+                        if (document.getElementById('waste-grid')) renderWasteGrid(chapter.content.wasteData);
+                        if (document.getElementById('5s-stepper')) render5SStepper(chapter.content.fiveSData);
+                        if (document.getElementById('sixSigmaChart')) initializeSixSigmaChart(chapter.content.sixSigmaChartData);
+                        attachOeeInputListeners();
+                        if (document.getElementById('plannedTime')) initializeOEEInputs(chapter.content.oeeInputsInitial);
+                    } else if (chapterId === 'chapter7') {
+                        attachMCEListeners(); // Chapter 7 has MCE calculator
+                    } else if (chapterId === 'chapter8') {
+                        attachZScoreListeners(); // Chapter 8 has Altman Z-Score calculator
+                    } else if (chapterId === 'chapter12') {
+                        attachInternationalTPListeners(); // Chapter 12 has International TP calculator
+                    } else if (chapterId === 'chapter13') {
+                        attachLearningCurveListeners(); // Chapter 13 has Learning Curve calculator
+                    }
+
+
+                } catch (error) {
+                    console.error('Error loading chapter or quiz:', error);
+                    chapterContentView.innerHTML = `<p class="text-red-600">Error loading chapter content or quiz data. Please try again. Details: ${error.message}</p>`;
+                    currentQuizData = { questions: [] }; // Ensure quiz data is empty on error
+                }
+
+
+                // Reset and render quiz (quiz elements are part of the loaded HTML, so ensure they exist)
+                const quizContainerElement = document.getElementById('quiz-container');
+                if (quizContainerElement) { // Check if the quiz section was loaded
+                    attachQuizButtonListeners(); // Re-attach listeners for quiz buttons
+                    currentQuestionIndex = 0;
+                    userAnswers = Array(currentQuizData.questions.length).fill(null);
+                    quizSubmitted = false;
+                    
+                    updateQuizDOMReferences(); // Get fresh references for quiz elements
+                    if (quizResults) quizResults.classList.add('hidden');
+                    if (submitQuizBtn) submitQuizBtn.classList.add('hidden');
+                    if (nextBtn) nextBtn.classList.remove('hidden');
+
+                    renderQuizQuestion();
+                }
+
+
+                updateNavForChapter(chapter.sections);
+
+                // Scroll to the top of the content view
+                chapterContentView.scrollTop = 0;
+            }
+
+            function renderChapterCards() {
+                chapterCardsContainer.innerHTML = '';
+                Object.keys(chaptersData).forEach(chapterId => {
+                    const chapter = chaptersData[chapterId];
+                    const card = document.createElement('div');
+                    card.className = 'chapter-card p-6 bg-white rounded-xl shadow-md border border-slate-200';
+                    card.innerHTML = `
+                        <h3 class="text-xl font-bold text-teal-700 mb-2">${chapter.title}</h3>
+                        <p class="text-slate-600">Explore core concepts and test your knowledge.</p>
+                    `;
+                    card.addEventListener('click', () => displayChapter(chapterId));
+                    chapterCardsContainer.appendChild(card);
+                });
+            }
+
+            function updateNavForChapterSelection() {
+                desktopNav.innerHTML = '';
+                desktopNav.appendChild(backToChaptersLink); // Keep it hidden or show based on context
+                backToChaptersLink.classList.add('hidden'); // Ensure it's hidden on chapter selection view
+                Object.keys(chaptersData).forEach(chapterId => {
+                    const chapter = chaptersData[chapterId];
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<a href="#" data-chapter-id="${chapterId}" class="nav-link flex items-center p-2 rounded-lg font-medium">${chapter.title}</a>`;
+                    listItem.querySelector('a').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        displayChapter(chapterId);
+                    });
+                    desktopNav.appendChild(listItem);
+                });
+            }
+
+            function updateNavForChapter(sections) {
+                desktopNav.innerHTML = '';
+                desktopNav.appendChild(backToChaptersLink);
+                backToChaptersLink.classList.remove('hidden');
+
+                sections.forEach(section => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<a href="#${section.id}" class="nav-link flex items-center p-2 rounded-lg font-medium">${section.title}</a>`;
+                    desktopNav.appendChild(listItem);
+                });
+
+                // Re-attach observer for active class
+                // Need to re-query sections after content is loaded
+                const sectionsInView = document.querySelectorAll('#chapter-content-view .content-section');
+                const navLinksInView = document.querySelectorAll('.nav-link');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            navLinksInView.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                    link.classList.add('active');
+                                }
+                            });
+                        }
+                    });
+                }, { root: null, rootMargin: '0px', threshold: 0.4 });
+                sectionsInView.forEach(section => observer.observe(section));
+            }
+
+            // Content Rendering Functions (moved from global scope into specific functions)
+            function renderWasteGrid(data) {
+                const wasteGrid = document.getElementById('waste-grid');
+                if (!wasteGrid) return; // Ensure element exists for Chapter 3
+                wasteGrid.innerHTML = ''; // Clear previous content
+                data.forEach(waste => {
+                    const card = document.createElement('div');
+                    card.className = 'p-4 bg-slate-50 rounded-lg shadow-sm cursor-pointer hover:bg-teal-50 hover:shadow-md transition-all';
+                    card.innerHTML = `<h3 class="font-semibold text-slate-800">${waste.name}</h3>`;
+                    card.addEventListener('click', () => {
+                        const descEl = card.querySelector('p');
+                        if (descEl) {
+                            descEl.remove();
+                        } else {
+                            const newDesc = document.createElement('p');
+                            newDesc.className = 'text-sm text-slate-600 mt-2';
+                            newDesc.textContent = waste.desc;
+                            card.appendChild(newDesc);
+                        }
+                    });
+                    wasteGrid.appendChild(card);
+                });
+            }
+
+            function render5SStepper(data) {
+                const stepper = document.getElementById('5s-stepper');
+                const details = document.getElementById('5s-details');
+                if (!stepper || !details) return; // Ensure elements exist for Chapter 3
+                stepper.innerHTML = ''; // Clear previous content
+                details.innerHTML = ''; // Clear previous content
+
+                data.forEach((s, index) => {
+                    const step = document.createElement('button');
+                    step.className = 'step-btn p-3 rounded-full w-full md:w-auto text-center font-semibold border-2 border-slate-200 bg-white hover:border-teal-500 hover:bg-teal-50 transition';
+                    step.textContent = s.name;
+                    step.dataset.index = index;
+                    stepper.appendChild(step);
+
+                    step.addEventListener('click', () => {
+                        document.querySelectorAll('#5s-stepper .step-btn').forEach(btn => btn.classList.remove('bg-teal-500', 'text-white', 'border-teal-500'));
+                        step.classList.add('bg-teal-500', 'text-white', 'border-teal-500');
+                        details.innerHTML = `<p class="font-semibold">${s.name}</p><p class="text-slate-700">${s.desc}</p>`;
+                    });
+                });
+                if (data.length > 0) {
+                    stepper.querySelector('.step-btn').click(); // Activate first step by default
+                }
+            }
+
+            function initializeSixSigmaChart(data) {
+                const sixSigmaCanvas = document.getElementById('sixSigmaChart');
+                if (!sixSigmaCanvas) {
+                    console.warn("Six Sigma Canvas not found.");
+                    return;
+                }
+
+                // Safely destroy previous chart instance if it exists and is a Chart object
+                if (currentSixSigmaChart instanceof Chart) {
+                    currentSixSigmaChart.destroy();
+                }
+                
+                const sixSigmaCtx = sixSigmaCanvas.getContext('2d');
+                currentSixSigmaChart = new Chart(sixSigmaCtx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: 'Defects vs. Sigma Level', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y.toLocaleString();
+                                        }
+                                        return label;
+                                    },
+                                    afterLabel: function(context) {
+                                        return `Yield: ${context.dataset.yields[context.dataIndex]}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'logarithmic',
+                                title: { display: true, text: 'DPMO (Log Scale)' },
+                                min: 1
+                            },
+                            x: {
+                                title: { display: true, text: 'Sigma Level' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function initializeOEEInputs(initialValues) {
+                const plannedTimeInput = document.getElementById('plannedTime');
+                const downtimeInput = document.getElementById('downtime');
+                const idealCycleTimeInput = document.getElementById('idealCycleTime');
+                const totalCountInput = document.getElementById('totalCount');
+                const goodCountInput = document.getElementById('goodCount');
+
+                if (plannedTimeInput) plannedTimeInput.value = initialValues.plannedTime;
+                if (downtimeInput) downtimeInput.value = initialValues.downtime;
+                if (idealCycleTimeInput) idealCycleTimeInput.value = initialValues.idealCycleTime;
+                if (totalCountInput) totalCountInput.value = initialValues.totalCount;
+                if (goodCountInput) goodCountInput.value = initialValues.goodCount;
+                
+                calculateOEE(); // Recalculate OEE with new initial values
+            }
+
+            // Initial load: Display chapter selection
+            displayChapterSelection();
+
+            backToChaptersLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                displayChapterSelection();
+            });
+        });
+    </script>
+</body>
+</html>

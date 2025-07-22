@@ -1,0 +1,223 @@
+<section id="introduction-ch13" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Standard Costing</h2>
+    <p class="text-slate-600">This chapter covers advanced variance analysis, including planning and operational variances, variance analysis in activity-based costing, and the impact of learning curves. It also explains the reconciliation of budgeted and actual profit margins, reporting of variances, and behavioral issues related to standard costing in contemporary business environments.</p>
+</section>
+
+<section id="advanced-variances" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Analysis of Advanced Variances</h2>
+    <p class="text-slate-600 mb-4">When environmental conditions differ from anticipated ones, routine variance analysis may not be suitable for measuring managerial performance. It's necessary to compute Planning and Operational Variances.</p>
+    <ul class="list-disc list-inside text-slate-600 space-y-1">
+        <li>**Planning Variance:** Compares a revised standard (ex-post) to the original standard (ex-ante). Also known as a revision variance.</li>
+        <li>**Operational Variance:** Compares actual results against the revised standard. Realistic way of assessing performance.</li>
+    </ul>
+
+    <h3 class="text-xl font-semibold text-slate-800 mt-4 mb-2">Direct Material Variances Formulas:</h3>
+    <div class="bg-slate-50 p-4 rounded-lg mb-4">
+        <h4 class="font-semibold text-slate-700 mb-2">Direct Material Usage Variance:</h4>
+        <p class="text-slate-700 text-sm">$\text{Traditional} = (\text{Standard Quantity} - \text{Actual Quantity}) \times \text{Standard Price}$</p>
+        <p class="text-slate-700 text-sm">$\text{Planning} = (\text{Standard Quantity} - \text{Revised Standard Quantity}) \times \text{Standard Price}$</p>
+        <p class="text-slate-700 text-sm">$\text{Operational} = (\text{Revised Standard Quantity} - \text{Actual Quantity}) \times \text{Revised Standard Price}$</p>
+    </div>
+    <div class="bg-slate-50 p-4 rounded-lg mb-4">
+        <h4 class="font-semibold text-slate-700 mb-2">Direct Material Price Variance:</h4>
+        <p class="text-slate-700 text-sm">$\text{Traditional} = (\text{Standard Price} - \text{Actual Price}) \times \text{Actual Quantity}$</p>
+        <p class="text-slate-700 text-sm">$\text{Planning} = (\text{Standard Price} - \text{Revised Standard Price}) \times \text{Revised Standard Quantity}$</p>
+        <p class="text-slate-700 text-sm">$\text{Operational} = (\text{Revised Standard Price} - \text{Actual Price}) \times \text{Actual Quantity}$</p>
+    </div>
+
+    <h3 class="text-xl font-semibold text-slate-800 mt-4 mb-2">Direct Labour Variances Formulas:</h3>
+    <div class="bg-slate-50 p-4 rounded-lg mb-4">
+        <h4 class="font-semibold text-slate-700 mb-2">Direct Labour Efficiency Variance:</h4>
+        <p class="text-slate-700 text-sm">$\text{Traditional} = (\text{Standard Time} - \text{Actual Time}) \times \text{Standard Rate}$</p>
+        <p class="text-slate-700 text-sm">$\text{Planning} = (\text{Standard Time} - \text{Revised Standard Time}) \times \text{Standard Rate}$</p>
+        <p class="text-slate-700 text-sm">$\text{Operational} = (\text{Revised Standard Time} - \text{Actual Time}) \times \text{Revised Standard Rate}$</p>
+    </div>
+    <div class="bg-slate-50 p-4 rounded-lg mb-4">
+        <h4 class="font-semibold text-slate-700 mb-2">Direct Labour Rate Variance:</h4>
+        <p class="text-slate-700 text-sm">$\text{Traditional} = (\text{Standard Rate} - \text{Actual Rate}) \times \text{Actual Time}$</p>
+        <p class="text-slate-700 text-sm">$\text{Planning} = (\text{Standard Rate} - \text{Revised Standard Rate}) \times \text{Revised Standard Time}$</p>
+        <p class="text-slate-700 text-sm">$\text{Operational} = (\text{Revised Standard Rate} - \text{Actual Rate}) \times \text{Actual Time}$</p>
+    </div>
+
+    <h3 class="text-xl font-semibold text-slate-800 mt-4 mb-2">Variance Analysis in Activity Based Costing:</h3>
+    <p class="text-slate-600 mb-4">Applies variance analysis to activity costs (e.g., setup, testing). Price variance is difference between standard and actual price for actual quantity of cost driver. Efficiency variance measures difference between actual and standard cost driver units used.</p>
+    <div class="bg-slate-50 p-4 rounded-lg mt-4">
+        <h4 class="font-semibold text-slate-700 mb-2">ABC Variance Calculator (Example from Chapter):</h4>
+        <p class="text-sm text-slate-600 mb-2">Calculate Efficiency and Expenditure Variances for Overheads based on Customer Deliveries.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="budgetedOverheads" class="block text-sm font-medium text-slate-700">Budgeted Overheads (₹)</label>
+                <input type="number" id="budgetedOverheads" value="4000" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="budgetedOutputUnits" class="block text-sm font-medium text-slate-700">Budgeted Output (units)</label>
+                <input type="number" id="budgetedOutputUnits" value="2000" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="budgetedDeliveries" class="block text-sm font-medium text-slate-700">Budgeted Customer Deliveries (no.)</label>
+                <input type="number" id="budgetedDeliveries" value="20" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="actualOverheads" class="block text-sm font-medium text-slate-700">Actual Overheads (₹)</label>
+                <input type="number" id="actualOverheads" value="3900" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="actualOutputUnits" class="block text-sm font-medium text-slate-700">Actual Output (units)</label>
+                <input type="number" id="actualOutputUnits" value="2100" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="actualDeliveries" class="block text-sm font-medium text-slate-700">Actual Customer Deliveries (no.)</label>
+                <input type="number" id="actualDeliveries" value="19" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+            </div>
+            <div class="md:col-span-2">
+                <button id="calculateABCVariances" class="mt-2 bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-teal-700 transition">Calculate ABC Variances</button>
+            </div>
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-md">
+            <p class="font-semibold text-slate-800">Efficiency Variance: <span id="abcEfficiencyResult" class="text-teal-600"></span></p>
+            <p class="font-semibold text-slate-800">Expenditure Variance: <span id="abcExpenditureResult" class="text-teal-600"></span></p>
+        </div>
+    </div>
+
+    <h3 class="text-xl font-semibold text-slate-800 mt-6 mb-2">Learning Curve - Impact on Variances:</h3>
+    <p class="text-slate-600 mb-4">Learning curve reveals steadily decreasing cost for repetitive operations as units are produced. This reduces man-hours and costs per unit. It's crucial for setting standards, determining prices, and planning production in less-automated processes. Variances are computed by comparing actual data with standard time derived from the learning curve theory.</p>
+</section>
+
+<section id="reconciliation-profit" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Reconciliation of Profit</h2>
+    <p class="text-slate-600 mb-4">Reconciliation statements bridge the gap between budgeted and actual profit by accounting for various variances. This can be done under Absorption Costing or Marginal Costing.</p>
+    <h3 class="text-xl font-semibold text-slate-800 mb-2">Sales Variances (Marginal Costing):</h3>
+    <ul class="list-disc list-inside text-slate-600 space-y-1">
+        <li>**Sales Contribution Variance:** $\text{Actual Contribution} - \text{Budgeted Contribution}$.</li>
+        <li>**Sales Contribution Price Variance:** $(\text{Actual Contribution per unit} - \text{Standard Contribution per unit}) \times \text{Actual Quantity}$.</li>
+        <li>**Sales Contribution Volume Variance:** $(\text{Actual Quantity} - \text{Budgeted Quantity}) \times \text{Standard Contribution per unit}$.</li>
+        <li>**Sales Contribution Mix Variance:** $(\text{Actual Quantity} - \text{Actual Quantity in Budgeted Proportions}) \times \text{Standard Contribution per unit}$.</li>
+        <li>**Sales Contribution Quantity Variance:** $(\text{Actual Quantity in Budgeted Proportion} - \text{Budgeted Quantity}) \times \text{Standard Contribution per unit}$.</li>
+        <li>**Market Size Variance:** $[\text{Budgeted Market Share %} \times (\text{Actual Industry Sales Quantity} - \text{Budgeted Industry Sales Quantity})] \times \text{Average Budgeted Contribution per unit}$.</li>
+        <li>**Market Share Variance:** $[(\text{Actual Market Share %} - \text{Budgeted Market Share %}) \times \text{Actual Industry Sales Quantity}] \times \text{Average Budgeted Contribution per unit}$.</li>
+    </ul>
+</section>
+
+<section id="investigation-variances" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Investigation of Variances</h2>
+    <p class="text-slate-600 mb-4">Not all deviations are 'out of control'. Variance investigation requires a cost-benefit analysis. It aims to determine definite conclusions about the cause of a variance so that corrective action can be effective.</p>
+    <h3 class="text-xl font-semibold text-slate-800 mb-2">Factors to Consider:</h3>
+    <ul class="list-disc list-inside text-slate-600 space-y-1">
+        <li>**Size:** Ignore small variations; investigate beyond established limits.</li>
+        <li>**Type of Variance:** Adverse variances are often prioritized.</li>
+        <li>**Cost:** Investigation cost should be lower than expected benefits.</li>
+        <li>**Pattern in variance:** Worsening trends warrant investigation.</li>
+        <li>**Budgetary process:** If unrealistic, re-evaluate the budget process.</li>
+    </ul>
+    <h3 class="text-xl font-semibold text-slate-800 mt-4 mb-2">Methods for Investigating Variances:</h3>
+    <ul class="list-disc list-inside text-slate-600 space-y-1">
+        <li>**Simple Rule of Thumb Model:** Arbitrary criteria (e.g., variance > certain amount or ratio > predetermined percentage).</li>
+        <li>**Statistical Decision Model:** Assumes system is 'In Control' (random fluctuations) or 'Out of Control' (corrective action needed). Investigation if probability of 'In-Control' falls below a level.</li>
+    </ul>
+</section>
+
+<section id="interdependence-variances" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Possible Interdependence Between Variances</h2>
+    <p class="text-slate-600 mb-4">The cause of one variance may be wholly or partially explained by another. For control, several variances should be looked at together, not in isolation.</p>
+    <h3 class="text-xl font-semibold text-slate-800 mb-2">Examples:</h3>
+    <ul class="list-disc list-inside text-slate-600 space-y-1">
+        <li>Cheaper, poorer quality material: Favorable material price variance, but adverse usage variance (more wastage).</li>
+        <li>More skilled labor: Adverse labor rate variance, but higher productivity (favorable efficiency).</li>
+        <li>Changing team composition: Favorable labor mix variance, but lower productivity (adverse yield).</li>
+        <li>Workers improving productivity for bonus: Favorable efficiency, but wasteful material usage (adverse materials usage).</li>
+        <li>Cutting sales prices: Adverse sales price variance, but higher sales demand (favorable sales volume).</li>
+    </ul>
+</section>
+
+<section id="interpretation-variances" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Interpretation of Variances</h2>
+    <p class="text-slate-600 mb-4">Potential causes leading to variances in operational costs:</p>
+    <ul class="list-disc list-inside text-slate-600 space-y-1">
+        <li>**Material Price Variance:** Different supplier, order size, unexpected buying cost increase, inefficient buying, poor inventory control.</li>
+        <li>**Material Usage Variance:** Inferior material quality, better quality control, increased production efficiency, material mix changes, careless handling, production method/design changes, pilferage, poor inspection.</li>
+        <li>**Labour Rate Variance:** Unexpected pay rate increase, labor experience level, bonuses, workforce composition changes.</li>
+        <li>**Labour Efficiency Variance:** Work/productivity improvement, workforce mix, industrial action, poor supervision, learning curve effect, resource shortages, inferior material, new machinery.</li>
+        <li>**Overhead Variances:** Spending in excess of budget (Fixed Expenditure), production volume changes (Fixed Volume), machine running costs (Variable Expenditure), similar to labor efficiency (Variable Efficiency).</li>
+        <li>**Sales Price Variance:** Higher discounts, low price offers in campaigns, poor sales performance, market conditions or economic conditions forcing changes in prices across the industry.</li>
+        <li>**Sales Volume Variance:** Successful or unsuccessful direct selling efforts, successful or unsuccessful marketing efforts, unexpected changes in customer preferences and buying patterns, failure to satisfy demand due to production difficulties, higher demand due to a cut in selling prices, or lower demand due to an increase in sales prices.</li>
+    </ul>
+</section>
+
+<section id="reporting-variances" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Reporting of Variances</h2>
+    <p class="text-slate-600 mb-4">Computation and reporting of variances are not the final step; they demand analysis by executives to ascertain correct reasons and take necessary steps to prevent re-occurrence of adverse variances. Reporting should be prompt and facilitate action.</p>
+    <p class="text-slate-600">Reports should highlight: expected cost performance, closeness of actual to standard, analysis/causes of variances, magnitude of variances, and be based on management by exception.</p>
+</section>
+
+<section id="behavioural-issues" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Behavioural Issues</h2>
+    <p class="text-slate-600 mb-4">Variance analysis can encourage short-termism and sub-optimal behavior (e.g., budget slack). These issues can be managed by involving employees in budget setting and using a wide range of quantitative and qualitative measures to encourage a long-term view aligned with strategic direction.</p>
+    <p class="text-slate-600">Ethical consequences can arise (e.g., favorable variances from insufficient medical treatment).</p>
+</section>
+
+<section id="standard-costing-env" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">Standard Costing in Contemporary Business Environment</h2>
+    <p class="text-slate-600 mb-4">Standard costing may be inappropriate in modern production environments due to: products not being standardized, standard costs becoming outdated quickly, highly automated production, emphasis on continuous improvement, ideal standards used more often, variance reports arriving too late, and variance analysis not giving enough detail.</p>
+    <p class="text-slate-600 mt-4">In high-technology firms, many costs become fixed. Emphasis shifts to direct materials and variable manufacturing overhead. Labor variances may be less meaningful as direct labor becomes a committed cost.</p>
+    <p class="text-slate-600 mt-4">**Standard Costing in Service Sector:** Applicable but tougher due to high overheads. ABC can provide an effective basis for overhead variance analysis.</p>
+    <p class="text-slate-600 mt-4">**Standard Costing in Public Sectors:** Regular variance analysis for cost control (e.g., street cleaning). Actual unit costs compared monthly with estimated. Requires detailed time recording and financial reports.</p>
+</section>
+
+<section id="quiz" class="content-section p-6 bg-white rounded-xl shadow-sm mb-8">
+    <h2 class="text-2xl font-bold text-teal-700 mb-4">MCQ Test</h2>
+    <p class="text-slate-600 mb-6">Test your knowledge on the concepts covered in this chapter. Select your answers and submit the quiz to see your score and detailed explanations.</p>
+    <div id="quiz-container">
+        <div id="question-display" class="mb-6"></div>
+        <div id="quiz-navigation" class="flex justify-between items-center mt-4">
+            <button id="prev-btn" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 transition disabled:opacity-50" disabled>Previous</button>
+            <span id="question-counter" class="font-medium text-slate-600">Question 1 of 40</span>
+            <button id="next-btn" class="bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50">Next</button>
+        </div>
+        <button id="submit-quiz-btn" class="mt-6 w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 hidden">Submit Quiz</button>
+        <div id="quiz-loading-indicator" class="hidden">Generating new questions, please wait...</div>
+        <button id="generate-new-quiz-btn" class="mt-4 w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50">Generate New Quiz</button>
+        <div id="quiz-results" class="mt-6 p-4 bg-slate-50 rounded-lg hidden">
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Your Score: <span id="score-display" class="text-teal-600"></span></h3>
+            <p id="correct-count" class="text-slate-600"></p>
+            <p id="incorrect-count" class="text-slate-600"></p>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ABC Variance Calculator Logic
+        const calculateABCVariancesBtn = document.getElementById('calculateABCVariances');
+        if (calculateABCVariancesBtn) {
+            calculateABCVariancesBtn.addEventListener('click', calculateABCVariances);
+            // Initial calculation on load for default values
+            calculateABCVariances();
+        }
+
+        function calculateABCVariances() {
+            const budgetedOverheads = parseFloat(document.getElementById('budgetedOverheads').value);
+            const budgetedOutputUnits = parseFloat(document.getElementById('budgetedOutputUnits').value);
+            const budgetedDeliveries = parseFloat(document.getElementById('budgetedDeliveries').value);
+            const actualOverheads = parseFloat(document.getElementById('actualOverheads').value);
+            const actualOutputUnits = parseFloat(document.getElementById('actualOutputUnits').value);
+            const actualDeliveries = parseFloat(document.getElementById('actualDeliveries').value);
+
+            // Calculate Budgeted Cost per Delivery (Standard Rate per Cost Driver)
+            const standardRatePerDelivery = budgetedOverheads / budgetedDeliveries;
+
+            // Calculate Standard Deliveries for Actual Output
+            const standardDeliveriesForActualOutput = (budgetedDeliveries / budgetedOutputUnits) * actualOutputUnits;
+
+            // Efficiency Variance
+            // Cost Impact of undertaking activities more/less than standard
+            const efficiencyVariance = (standardDeliveriesForActualOutput - actualDeliveries) * standardRatePerDelivery;
+
+            // Expenditure Variance
+            // Cost impact of paying more/less than standard for actual activities undertaken
+            const expenditureVariance = (actualDeliveries * standardRatePerDelivery) - actualOverheads;
+
+            document.getElementById('abcEfficiencyResult').textContent = `${efficiencyVariance.toFixed(2)} (${efficiencyVariance > 0 ? 'F' : 'A'})`;
+            document.getElementById('abcExpenditureResult').textContent = `${expenditureVariance.toFixed(2)} (${expenditureVariance > 0 ? 'F' : 'A'})`;
+        }
+    });
+</script>
